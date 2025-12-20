@@ -8,6 +8,9 @@ import FilterTab from './FilterTab';
 import OrdersTable from './OrdersTable';
 import OrderDetailModal from './OrderDetailModal';
 import BatchProductsForm from './BatchProductsForm';
+import CategoryManagement from './CategoryManagement';
+import SingleProductForm from './SingleProductForm';
+import ProductManagement from './ProductManagement';
 
 interface DashboardViewProps {
   stats: OrderStats | null;
@@ -104,7 +107,35 @@ export default function DashboardView({
           </div>
 
         <OrdersTable orders={filteredOrders} loading={statsLoading} onSelectOrder={(order) => onSelectOrder(order)} />
+        </div>
+
+        {/* Products Management Section */}
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold text-slate-800">Quản lý sản phẩm</h2>
           
+          <div className="grid gap-6 lg:grid-cols-2">
+            <SingleProductForm
+              accessToken={accessToken}
+              onSuccess={() => {
+                onRefresh();
+              }}
+            />
+
+            <CategoryManagement
+              accessToken={accessToken}
+              onSuccess={() => {
+                onRefresh();
+              }}
+            />
+          </div>
+
+          <ProductManagement
+            accessToken={accessToken}
+            onSuccess={() => {
+              onRefresh();
+            }}
+          />
+
           <BatchProductsForm
             accessToken={accessToken}
             onSuccess={async () => {

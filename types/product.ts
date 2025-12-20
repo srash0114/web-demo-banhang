@@ -7,6 +7,7 @@ export interface BatchProductInput {
   reviewCount?: number;
   sizes?: string[];
   colors?: string[];
+  categoryId?: number; // ID của category (tùy chọn)
 }
 
 export interface ManualProductFormState {
@@ -29,4 +30,5 @@ export interface NormalizedBatchProduct {
   reviewCount: number;
   sizes: string[];
   colors: string[];
+  categoryId?: number; // ID của category (tùy chọn)
 }

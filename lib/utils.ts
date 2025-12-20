@@ -53,3 +53,45 @@ export function splitToList(input: string) {
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
 }
+
+/**
+ * Convert File object thành base64 string
+ * @param file File object từ input
+ * @returns Promise với base64 string (bao gồm data URI prefix)
+ */
+export function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Failed to read file as string'));
+      }
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Validate file hình ảnh
+ * @param file File object cần validate
+ * @param maxSizeMB Kích thước tối đa (MB)
+ * @returns Error message hoặc null nếu hợp lệ
+ */
+export function validateImageFile(file: File, maxSizeMB: number = 5): string | null {
+  // Check file type
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+  if (!allowedTypes.includes(file.type)) {
+    return 'Chỉ chấp nhận file ảnh (JPG, PNG, WEBP, GIF)';
+  }
+
+  // Check file size
+  const maxSizeBytes = maxSizeMB * 1024 * 1024;
+  if (file.size > maxSizeBytes) {
+    return `Kích thước file không được vượt quá ${maxSizeMB}MB`;
+  }
+
+  return null;
+}
