@@ -203,7 +203,7 @@ export default function CategoryManagement({ accessToken, onSuccess }: CategoryM
                       <p className="text-xs text-slate-500 mt-1 line-clamp-2">{category.description}</p>
                     )}
                     <p className="text-xs text-slate-400 mt-2">
-                      {category.products?.length ?? 0} sản phẩm
+                      {category.productCount ?? 0} sản phẩm
                     </p>
                   </div>
                   <button

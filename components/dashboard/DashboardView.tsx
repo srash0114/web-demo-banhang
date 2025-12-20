@@ -7,7 +7,6 @@ import StatCard from './StatCard';
 import FilterTab from './FilterTab';
 import OrdersTable from './OrdersTable';
 import OrderDetailModal from './OrderDetailModal';
-import BatchProductsForm from './BatchProductsForm';
 import CategoryManagement from './CategoryManagement';
 import SingleProductForm from './SingleProductForm';
 import ProductManagement from './ProductManagement';
@@ -133,13 +132,6 @@ export default function DashboardView({
             accessToken={accessToken}
             onSuccess={() => {
               onRefresh();
-            }}
-          />
-
-          <BatchProductsForm
-            accessToken={accessToken}
-            onSuccess={async () => {
-              await Promise.resolve(onRefresh());
             }}
           />
         </div>

@@ -4,7 +4,7 @@ export interface Category {
   description?: string;
   createdAt?: string;
   updatedAt?: string;
-  products?: any[]; // Danh sách products thuộc category này
+  productCount?: number; // Số lượng sản phẩm trong category
 }
 
 export interface CreateCategoryDto {
