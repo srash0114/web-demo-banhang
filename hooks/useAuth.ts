@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { API_BASE_URL, TOKEN_STORAGE_KEY } from '@/lib/constants';
-import { resolveMessage } from '@/lib/utils';
+import { resolveMessage, getNgrokHeaders } from '@/lib/utils';
 
 type LoginPayload = {
   email: string;
@@ -59,9 +59,9 @@ export function useAuth() {
       try {
         const res = await fetch(`${API_BASE_URL}/auth/login`, {
           method: 'POST',
-          headers: {
+          headers: getNgrokHeaders({
             'Content-Type': 'application/json',
-          },
+          }),
           body: JSON.stringify(payload),
         });
         const data = await res.json().catch(() => null);
@@ -99,9 +99,9 @@ export function useAuth() {
       try {
         const res = await fetch(`${API_BASE_URL}/auth/register`, {
           method: 'POST',
-          headers: {
+          headers: getNgrokHeaders({
             'Content-Type': 'application/json',
-          },
+          }),
           body: JSON.stringify(payload),
         });
         const data = await res.json().catch(() => null);

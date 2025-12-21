@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Order, OrderStats } from '@/types/order';
-import { formatCurrency, resolveMessage } from '@/lib/utils';
+import { formatCurrency, resolveMessage, getNgrokHeaders } from '@/lib/utils';
 import { API_BASE_URL } from '@/lib/constants';
 import StatCard from './StatCard';
 import FilterTab from './FilterTab';
@@ -47,10 +47,10 @@ export default function DashboardView({
     try {
       const res = await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
         method: 'PATCH',
-        headers: {
+        headers: getNgrokHeaders({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
-        },
+        }),
         body: JSON.stringify({ status: newStatus }),
       });
 

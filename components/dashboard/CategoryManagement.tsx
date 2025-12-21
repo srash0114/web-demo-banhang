@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '@/lib/constants';
 import { Category, CreateCategoryDto } from '@/types/category';
-import { resolveMessage, formatCurrency } from '@/lib/utils';
+import { resolveMessage, formatCurrency, getNgrokHeaders } from '@/lib/utils';
 
 interface Product {
   id: number;
@@ -45,9 +45,9 @@ export default function CategoryManagement({ accessToken, onSuccess }: CategoryM
     setError(null);
     try {
       const res = await fetch(`${API_BASE_URL}/categories`, {
-        headers: {
+        headers: getNgrokHeaders({
           Authorization: `Bearer ${accessToken}`,
-        },
+        }),
       });
       if (!res.ok) {
         throw new Error('Không thể tải danh sách categories');
@@ -76,10 +76,10 @@ export default function CategoryManagement({ accessToken, onSuccess }: CategoryM
     try {
       const res = await fetch(`${API_BASE_URL}/categories`, {
         method: 'POST',
-        headers: {
+        headers: getNgrokHeaders({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
-        },
+        }),
         body: JSON.stringify({
           name: newCategory.name.trim(),
           description: newCategory.description?.trim() || undefined,
@@ -117,9 +117,9 @@ export default function CategoryManagement({ accessToken, onSuccess }: CategoryM
     try {
       const res = await fetch(`${API_BASE_URL}/categories/${categoryId}`, {
         method: 'DELETE',
-        headers: {
+        headers: getNgrokHeaders({
           Authorization: `Bearer ${accessToken}`,
-        },
+        }),
       });
 
       if (!res.ok) {
@@ -144,7 +144,7 @@ export default function CategoryManagement({ accessToken, onSuccess }: CategoryM
     try {
       // Load products thuộc category này
       const resCategory = await fetch(`${API_BASE_URL}/products/random?count=100`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: getNgrokHeaders({ Authorization: `Bearer ${accessToken}` }),
       });
       if (resCategory.ok) {
         const allProds = await resCategory.json();
@@ -178,10 +178,10 @@ export default function CategoryManagement({ accessToken, onSuccess }: CategoryM
       // Sử dụng endpoint mới: POST /categories/:id/products
       const res = await fetch(`${API_BASE_URL}/categories/${managingCategory.id}/products`, {
         method: 'POST',
-        headers: {
+        headers: getNgrokHeaders({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
-        },
+        }),
         body: JSON.stringify(requestBody),
       });
 
@@ -217,9 +217,9 @@ export default function CategoryManagement({ accessToken, onSuccess }: CategoryM
       // Sử dụng endpoint mới: DELETE /categories/:id/products/:productId
       const res = await fetch(`${API_BASE_URL}/categories/${managingCategory.id}/products/${productId}`, {
         method: 'DELETE',
-        headers: {
+        headers: getNgrokHeaders({
           Authorization: `Bearer ${accessToken}`,
-        },
+        }),
       });
 
       if (!res.ok) {

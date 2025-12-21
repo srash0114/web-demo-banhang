@@ -95,3 +95,30 @@ export function validateImageFile(file: File, maxSizeMB: number = 5): string | n
 
   return null;
 }
+
+/**
+ * Thêm headers cần thiết cho ngrok requests để bypass warning page
+ */
+export function getNgrokHeaders(additionalHeaders?: HeadersInit): HeadersInit {
+  return {
+    'ngrok-skip-browser-warning': 'true',
+    'User-Agent': 'MyApp',
+    ...additionalHeaders,
+  };
+}
+
+/**
+ * Wrapper function cho fetch với ngrok headers tự động
+ */
+export async function fetchWithNgrok(
+  url: string,
+  options?: RequestInit
+): Promise<Response> {
+  const headers = getNgrokHeaders(options?.headers);
+  
+  return fetch(url, {
+    ...options,
+    headers,
+  });
+}
+

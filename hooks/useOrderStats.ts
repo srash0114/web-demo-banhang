@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { API_BASE_URL } from '@/lib/constants';
-import { resolveMessage } from '@/lib/utils';
+import { resolveMessage, getNgrokHeaders } from '@/lib/utils';
 import { OrderStats } from '@/types/order';
 
 export function useOrderStats(accessToken: string | null, onUnauthorized?: () => void) {
@@ -19,9 +19,9 @@ export function useOrderStats(accessToken: string | null, onUnauthorized?: () =>
     setStatsError(null);
     try {
       const res = await fetch(`${API_BASE_URL}/orders/statistics`, {
-        headers: {
+        headers: getNgrokHeaders({
           Authorization: `Bearer ${accessToken}`,
-        },
+        }),
       });
       const payload = await res.json().catch(() => null);
       if (!res.ok || !payload) {

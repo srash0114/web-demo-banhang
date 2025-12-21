@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { API_BASE_URL } from '@/lib/constants';
-import { formatCurrency, resolveMessage, splitToList, fileToBase64, validateImageFile } from '@/lib/utils';
+import { formatCurrency, resolveMessage, splitToList, fileToBase64, validateImageFile, getNgrokHeaders } from '@/lib/utils';
 import { Category } from '@/types/category';
 
 interface SingleProductFormProps {
@@ -37,7 +37,7 @@ export default function SingleProductForm({ accessToken, onSuccess }: SingleProd
   const loadCategories = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/categories`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: getNgrokHeaders({ Authorization: `Bearer ${accessToken}` }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -125,10 +125,10 @@ export default function SingleProductForm({ accessToken, onSuccess }: SingleProd
       // Send request
       const res = await fetch(`${API_BASE_URL}/products`, {
         method: 'POST',
-        headers: {
+        headers: getNgrokHeaders({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
-        },
+        }),
         body: JSON.stringify(payload),
       });
 

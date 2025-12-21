@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '@/lib/constants';
-import { resolveMessage, formatCurrency } from '@/lib/utils';
+import { resolveMessage, formatCurrency, getNgrokHeaders } from '@/lib/utils';
 import { Category } from '@/types/category';
 
 interface Product {
@@ -42,9 +42,9 @@ export default function ProductManagement({ accessToken, onSuccess }: ProductMan
   const loadCategories = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/categories`, {
-        headers: {
+        headers: getNgrokHeaders({
           Authorization: `Bearer ${accessToken}`,
-        },
+        }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -61,9 +61,9 @@ export default function ProductManagement({ accessToken, onSuccess }: ProductMan
     try {
       // Lấy products từ API (có thể dùng endpoint /products/random hoặc tạo endpoint mới)
       const res = await fetch(`${API_BASE_URL}/products/random?count=50`, {
-        headers: {
+        headers: getNgrokHeaders({
           Authorization: `Bearer ${accessToken}`,
-        },
+        }),
       });
       if (!res.ok) {
         throw new Error('Không thể tải danh sách sản phẩm');
@@ -90,9 +90,9 @@ export default function ProductManagement({ accessToken, onSuccess }: ProductMan
     try {
       const res = await fetch(`${API_BASE_URL}/products/${productId}`, {
         method: 'DELETE',
-        headers: {
+        headers: getNgrokHeaders({
           Authorization: `Bearer ${accessToken}`,
-        },
+        }),
       });
 
       if (!res.ok) {
@@ -129,10 +129,10 @@ export default function ProductManagement({ accessToken, onSuccess }: ProductMan
     try {
       const res = await fetch(`${API_BASE_URL}/products/${editingProduct.id}`, {
         method: 'PATCH',
-        headers: {
+        headers: getNgrokHeaders({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
-        },
+        }),
         body: JSON.stringify({ quantity }),
       });
 
@@ -171,10 +171,10 @@ export default function ProductManagement({ accessToken, onSuccess }: ProductMan
       
       const res = await fetch(`${API_BASE_URL}/products/${editingCategory.id}`, {
         method: 'PATCH',
-        headers: {
+        headers: getNgrokHeaders({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
-        },
+        }),
         body: JSON.stringify(requestBody),
       });
 
