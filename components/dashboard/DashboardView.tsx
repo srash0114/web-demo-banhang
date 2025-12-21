@@ -85,6 +85,21 @@ export default function DashboardView({
     return source.filter((order) => order.status === filterStatus);
   }, [stats, filterStatus]);
 
+  // Tính doanh thu từ các đơn hàng đã thanh toán, đang giao và đã giao
+  const confirmedRevenue = useMemo(() => {
+    const orders = stats?.recentOrders ?? [];
+    const confirmedStatuses = ['COMPLETED', 'SHIPPING', 'DELIVERED'];
+    
+    return orders
+      .filter(order => confirmedStatuses.includes(order.status))
+      .reduce((total, order) => {
+        const price = typeof order.totalPrice === 'string' 
+          ? parseFloat(order.totalPrice) 
+          : order.totalPrice;
+        return total + (price || 0);
+      }, 0);
+  }, [stats]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 md:p-10 font-sans text-slate-800">
       <div className="mx-auto max-w-7xl space-y-10">
@@ -135,7 +150,7 @@ export default function DashboardView({
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <StatCard label="Tổng đơn hàng" value={stats?.totalOrders ?? 0} icon="📦" color="blue" />
           <StatCard label="Số khách hàng" value={stats?.totalCustomers ?? 0} icon="👤" color="orange" />
-          <StatCard label="Doanh thu hoàn tất" value={formatCurrency(stats?.totalRevenue)} icon="💰" color="emerald" dark />
+          <StatCard label="Doanh thu hoàn tất" value={formatCurrency(confirmedRevenue)} icon="💰" color="emerald" dark />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
