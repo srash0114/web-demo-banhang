@@ -13,6 +13,8 @@ interface Product {
   imageBase64?: string;
   category?: Category;
   createdAt?: string;
+  quantity?: number;
+  isSoldOut?: boolean;
 }
 
 interface ProductManagementProps {
@@ -27,6 +29,8 @@ export default function ProductManagement({ accessToken, onSuccess }: ProductMan
   const [message, setMessage] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<number | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [newQuantity, setNewQuantity] = useState<string>('');
 
   useEffect(() => {
     loadProducts();
@@ -101,6 +105,51 @@ export default function ProductManagement({ accessToken, onSuccess }: ProductMan
       onSuccess?.();
     } catch (err) {
       const messageText = err instanceof Error ? err.message : 'Lỗi khi xóa sản phẩm';
+      setError(messageText);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateQuantity = async () => {
+    if (!editingProduct) return;
+
+    const quantity = Number(newQuantity);
+    if (isNaN(quantity) || quantity < 0) {
+      setError('Số lượng không hợp lệ');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/products/${editingProduct.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ quantity }),
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        const messageText = resolveMessage(payload, 'Không thể cập nhật số lượng');
+        throw new Error(messageText);
+      }
+
+      const updatedProduct = await res.json();
+      setMessage(`Đã cập nhật số lượng sản phẩm "${editingProduct.name}" thành công`);
+      
+      // Cập nhật state
+      setProducts(products.map(p => p.id === editingProduct.id ? updatedProduct : p));
+      setEditingProduct(null);
+      setNewQuantity('');
+      onSuccess?.();
+    } catch (err) {
+      const messageText = err instanceof Error ? err.message : 'Lỗi khi cập nhật số lượng';
       setError(messageText);
     } finally {
       setLoading(false);
@@ -209,23 +258,96 @@ export default function ProductManagement({ accessToken, onSuccess }: ProductMan
                         {product.category.name}
                       </span>
                     )}
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-600">
+                        Kho: {product.quantity ?? 0}
+                      </span>
+                      {product.isSoldOut && (
+                        <span className="px-2 py-1 rounded-lg bg-rose-100 text-rose-600 text-xs font-semibold">
+                          Hết hàng
+                        </span>
+                      )}
+                      {(product.quantity ?? 0) > 0 && (product.quantity ?? 0) <= 10 && !product.isSoldOut && (
+                        <span className="px-2 py-1 rounded-lg bg-amber-100 text-amber-600 text-xs font-semibold">
+                          Sắp hết
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Delete Button */}
-                  <button
-                    onClick={() => handleDeleteProduct(product.id, product.name)}
-                    disabled={loading}
-                    className="opacity-0 group-hover:opacity-100 flex-shrink-0 bg-rose-50 hover:bg-rose-100 text-rose-600 px-4 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95"
-                    title="Xóa sản phẩm"
-                  >
-                    Xóa
-                  </button>
+                  {/* Action Buttons */}
+                  <div className="flex-shrink-0 flex gap-2">
+                    <button
+                      onClick={() => {
+                        setEditingProduct(product);
+                        setNewQuantity(String(product.quantity ?? 0));
+                      }}
+                      disabled={loading}
+                      className="opacity-0 group-hover:opacity-100 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-4 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95"
+                      title="Chỉnh sửa số lượng"
+                    >
+                      Sửa
+                    </button>
+                    <button
+                      onClick={() => handleDeleteProduct(product.id, product.name)}
+                      disabled={loading}
+                      className="opacity-0 group-hover:opacity-100 bg-rose-50 hover:bg-rose-100 text-rose-600 px-4 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95"
+                      title="Xóa sản phẩm"
+                    >
+                      Xóa
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Edit Quantity Modal */}
+      {editingProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-md">
+          <div className="bg-white rounded-3xl p-6 shadow-2xl max-w-md w-full">
+            <h4 className="text-lg font-semibold text-slate-700 mb-4">Cập nhật số lượng</h4>
+            <p className="text-sm text-slate-600 mb-4">
+              Sản phẩm: <span className="font-semibold">{editingProduct.name}</span>
+            </p>
+            <div className="mb-4">
+              <label className="block text-xs font-semibold uppercase tracking-[0.35em] text-slate-500 mb-2">
+                Số lượng mới
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={newQuantity}
+                onChange={(e) => setNewQuantity(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setEditingProduct(null);
+                  setNewQuantity('');
+                  setError(null);
+                }}
+                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-2xl font-semibold text-sm transition-all"
+                disabled={loading}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleUpdateQuantity}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-2xl font-semibold text-sm transition-all"
+                disabled={loading}
+              >
+                {loading ? 'Đang cập nhật...' : 'Lưu'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <button
         onClick={loadProducts}

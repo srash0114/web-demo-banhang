@@ -2,14 +2,38 @@
 
 import { Order } from '@/types/order';
 import { formatCurrency } from '@/lib/utils';
-import { getStatusStyles } from '@/lib/status';
+import { getStatusStyles, ORDER_STATUSES, getAllowedStatuses } from '@/lib/status';
+import { useState, useMemo } from 'react';
 
 interface OrderDetailModalProps {
   order: Order;
   onClose: () => void;
+  onUpdateStatus?: (orderId: number, newStatus: string) => Promise<void>;
+  accessToken?: string;
 }
 
-export default function OrderDetailModal({ order, onClose }: OrderDetailModalProps) {
+export default function OrderDetailModal({ order, onClose, onUpdateStatus, accessToken }: OrderDetailModalProps) {
+  const [updating, setUpdating] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState(order.status);
+
+  // Lấy danh sách trạng thái được phép dựa trên trạng thái hiện tại
+  const allowedStatusValues = useMemo(() => getAllowedStatuses(order.status), [order.status]);
+  const availableStatuses = useMemo(
+    () => ORDER_STATUSES.filter(s => allowedStatusValues.includes(s.value)),
+    [allowedStatusValues]
+  );
+
+  const handleUpdateStatus = async () => {
+    if (!onUpdateStatus || selectedStatus === order.status) return;
+
+    setUpdating(true);
+    try {
+      await onUpdateStatus(order.id, selectedStatus);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-md">
       <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[40px] bg-white shadow-2xl border border-white">
@@ -73,14 +97,40 @@ export default function OrderDetailModal({ order, onClose }: OrderDetailModalPro
           </div>
         </div>
 
-        <div className="p-8 bg-gradient-to-r from-indigo-700 to-indigo-500 text-white flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-semibold opacity-80 uppercase tracking-[0.35em]">Tổng thanh toán</p>
-            <p className="text-3xl font-extrabold text-white leading-none">{formatCurrency(order.totalPrice)}</p>
+        <div className="p-8 bg-gradient-to-r from-indigo-700 to-indigo-500 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-[10px] font-semibold opacity-80 uppercase tracking-[0.35em]">Tổng thanh toán</p>
+              <p className="text-3xl font-extrabold text-white leading-none">{formatCurrency(order.totalPrice)}</p>
+            </div>
+            <div className={`px-4 py-2 rounded-xl text-[10px] font-semibold uppercase ${getStatusStyles(order.status)}`}>
+              {order.status}
+            </div>
           </div>
-          <div className={`px-4 py-2 rounded-xl text-[10px] font-semibold uppercase ${getStatusStyles(order.status)}`}>
-            {order.status}
-          </div>
+
+          {onUpdateStatus && (
+            <div className="flex gap-3 items-center">
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                disabled={updating || order.status === 'DELIVERED' || order.status === 'CANCELLED'}
+                className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold text-slate-700 bg-white border-0 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {availableStatuses.map((status) => (
+                  <option key={status.value} value={status.value}>
+                    {status.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleUpdateStatus}
+                disabled={updating || selectedStatus === order.status}
+                className="px-6 py-2 rounded-xl text-sm font-semibold bg-white text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {updating ? 'Đang cập nhật...' : 'Cập nhật'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

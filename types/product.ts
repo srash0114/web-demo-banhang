@@ -8,6 +8,8 @@ export interface BatchProductInput {
   sizes?: string[];
   colors?: string[];
   categoryId?: number; // ID của category (tùy chọn)
+  quantity?: number; // Số lượng trong kho
+  isSoldOut?: boolean; // Trạng thái bán hết
 }
 
 export interface ManualProductFormState {
@@ -19,6 +21,7 @@ export interface ManualProductFormState {
   reviewCount: string;
   sizes: string;
   colors: string;
+  quantity: string; // Số lượng trong kho
 }
 
 export interface NormalizedBatchProduct {
@@ -31,4 +34,6 @@ export interface NormalizedBatchProduct {
   sizes: string[];
   colors: string[];
   categoryId?: number; // ID của category (tùy chọn)
+  quantity?: number; // Số lượng trong kho
+  isSoldOut?: boolean; // Trạng thái bán hết
 }

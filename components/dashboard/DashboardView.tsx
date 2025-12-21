@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Order, OrderStats } from '@/types/order';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, resolveMessage } from '@/lib/utils';
+import { API_BASE_URL } from '@/lib/constants';
 import StatCard from './StatCard';
 import FilterTab from './FilterTab';
 import OrdersTable from './OrdersTable';
@@ -36,6 +37,45 @@ export default function DashboardView({
   onSelectOrder,
   accessToken,
 }: DashboardViewProps) {
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
+
+  const handleUpdateOrderStatus = async (orderId: number, newStatus: string) => {
+    setUpdateError(null);
+    setUpdateSuccess(null);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        const messageText = resolveMessage(payload, 'Không thể cập nhật trạng thái đơn hàng');
+        throw new Error(messageText);
+      }
+
+      setUpdateSuccess(`Đã cập nhật trạng thái đơn hàng #${orderId} thành công`);
+      
+      // Làm mới dữ liệu sau khi cập nhật
+      onRefresh();
+      
+      // Tự động ẩn thông báo sau 3s
+      setTimeout(() => setUpdateSuccess(null), 3000);
+    } catch (err) {
+      const messageText = err instanceof Error ? err.message : 'Lỗi khi cập nhật trạng thái';
+      setUpdateError(messageText);
+      
+      // Tự động ẩn thông báo lỗi sau 5s
+      setTimeout(() => setUpdateError(null), 5000);
+    }
+  };
+
   const ordersByStatus = stats?.ordersByStatus ?? [];
   const filteredOrders = useMemo(() => {
     const source = stats?.recentOrders ?? [];
@@ -80,6 +120,18 @@ export default function DashboardView({
           </div>
         )}
 
+        {updateError && (
+          <div className="rounded-3xl border border-rose-200 bg-rose-50 px-6 py-4 text-sm font-semibold text-rose-600">
+            {updateError}
+          </div>
+        )}
+
+        {updateSuccess && (
+          <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-6 py-4 text-sm font-semibold text-emerald-600">
+            {updateSuccess}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <StatCard label="Tổng đơn hàng" value={stats?.totalOrders ?? 0} icon="📦" color="blue" />
           <StatCard label="Số khách hàng" value={stats?.totalCustomers ?? 0} icon="👤" color="orange" />
@@ -105,7 +157,13 @@ export default function DashboardView({
             </div>
           </div>
 
-        <OrdersTable orders={filteredOrders} loading={statsLoading} onSelectOrder={(order) => onSelectOrder(order)} />
+        <OrdersTable 
+          orders={filteredOrders} 
+          loading={statsLoading} 
+          onSelectOrder={(order) => onSelectOrder(order)}
+          onUpdateStatus={handleUpdateOrderStatus}
+          accessToken={accessToken}
+        />
         </div>
 
         {/* Products Management Section */}
@@ -137,7 +195,14 @@ export default function DashboardView({
         </div>
       </div>
 
-      {selectedOrder && <OrderDetailModal order={selectedOrder} onClose={() => onSelectOrder(null)} />}
+      {selectedOrder && (
+        <OrderDetailModal 
+          order={selectedOrder} 
+          onClose={() => onSelectOrder(null)}
+          onUpdateStatus={handleUpdateOrderStatus}
+          accessToken={accessToken}
+        />
+      )}
     </div>
   );
 }
