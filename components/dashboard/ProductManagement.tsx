@@ -31,6 +31,8 @@ export default function ProductManagement({ accessToken, onSuccess }: ProductMan
   const [categories, setCategories] = useState<Category[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [newQuantity, setNewQuantity] = useState<string>('');
+  const [editingCategory, setEditingCategory] = useState<Product | null>(null);
+  const [newCategoryId, setNewCategoryId] = useState<number | null>(null);
 
   useEffect(() => {
     loadProducts();
@@ -150,6 +152,51 @@ export default function ProductManagement({ accessToken, onSuccess }: ProductMan
       onSuccess?.();
     } catch (err) {
       const messageText = err instanceof Error ? err.message : 'Lỗi khi cập nhật số lượng';
+      setError(messageText);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateCategory = async () => {
+    if (!editingCategory) return;
+
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      const requestBody = { categoryId: newCategoryId };
+      console.log('[ProductManagement] Updating product category:', { productId: editingCategory.id, categoryId: newCategoryId });
+      
+      const res = await fetch(`${API_BASE_URL}/products/${editingCategory.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => null);
+        console.error('[ProductManagement] Failed to update category:', { status: res.status, payload });
+        const messageText = resolveMessage(payload, 'Không thể cập nhật danh mục');
+        throw new Error(messageText);
+      }
+
+      const updatedProduct = await res.json();
+      console.log('[ProductManagement] Category updated successfully:', updatedProduct);
+      setMessage(`Đã cập nhật danh mục sản phẩm "${editingCategory.name}" thành công`);
+      
+      // Cập nhật state
+      setProducts(products.map(p => p.id === editingCategory.id ? updatedProduct : p));
+      setEditingCategory(null);
+      setNewCategoryId(null);
+      onSuccess?.();
+    } catch (err) {
+      console.error('[ProductManagement] Error updating category:', err);
+      const messageText = err instanceof Error ? err.message : 'Lỗi khi cập nhật danh mục';
       setError(messageText);
     } finally {
       setLoading(false);
@@ -279,6 +326,17 @@ export default function ProductManagement({ accessToken, onSuccess }: ProductMan
                   <div className="flex-shrink-0 flex gap-2">
                     <button
                       onClick={() => {
+                        setEditingCategory(product);
+                        setNewCategoryId(product.category?.id ?? null);
+                      }}
+                      disabled={loading}
+                      className="opacity-0 group-hover:opacity-100 bg-purple-50 hover:bg-purple-100 text-purple-600 px-4 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95"
+                      title="Thay đổi danh mục"
+                    >
+                      Danh mục
+                    </button>
+                    <button
+                      onClick={() => {
                         setEditingProduct(product);
                         setNewQuantity(String(product.quantity ?? 0));
                       }}
@@ -339,6 +397,56 @@ export default function ProductManagement({ accessToken, onSuccess }: ProductMan
               </button>
               <button
                 onClick={handleUpdateQuantity}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-2xl font-semibold text-sm transition-all"
+                disabled={loading}
+              >
+                {loading ? 'Đang cập nhật...' : 'Lưu'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Category Modal */}
+      {editingCategory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-md">
+          <div className="bg-white rounded-3xl p-6 shadow-2xl max-w-md w-full">
+            <h4 className="text-lg font-semibold text-slate-700 mb-4">Thay đổi danh mục</h4>
+            <p className="text-sm text-slate-600 mb-4">
+              Sản phẩm: <span className="font-semibold">{editingCategory.name}</span>
+            </p>
+            <div className="mb-4">
+              <label className="block text-xs font-semibold uppercase tracking-[0.35em] text-slate-500 mb-2">
+                Danh mục
+              </label>
+              <select
+                value={newCategoryId ?? ''}
+                onChange={(e) => setNewCategoryId(e.target.value ? Number(e.target.value) : null)}
+                className="w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                autoFocus
+              >
+                <option value="">Không có danh mục</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setEditingCategory(null);
+                  setNewCategoryId(null);
+                  setError(null);
+                }}
+                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-2xl font-semibold text-sm transition-all"
+                disabled={loading}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleUpdateCategory}
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-2xl font-semibold text-sm transition-all"
                 disabled={loading}
               >
